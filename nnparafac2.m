@@ -20,19 +20,22 @@ if size(varargin,2) < 2
 else
 end
 
-Xijkl = varargin{1};
-k = varargin{2};
+Xk = varargin{1};
+R = varargin{2};
 
 %Turn Xk into a cell array if it isn't already
-if ~iscell(Xkl)
-    for kl = 1:sz(3)
-        Xkc{kl} = Xkl(:,:,kl);
+if ~iscell(Xk)
+    K = size(Xk,3);
+    for kk = 1:K
+        Xkc{kk} = Xk(:,:,kk);
     end
-    Xkl = Xkc;
+    Xk = Xkc;
 end
 
 %Determining the size of each cell for initialisation purposes
-cellsz = cellfun(@size,Xkl,'uni',false);
+cellsz = cellfun(@size,Xk,'uni',false);
+K = size(cellsz,2);
+J = cellsz{1}(2);
 
 switch size(varargin,2)
     case 6
@@ -41,44 +44,44 @@ switch size(varargin,2)
         Bki = varargin{5};
         Dki = varargin{4};
         Ai = varargin{3};
-        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xkl,k,Bki,Ai,Dki,Bsi,1000);
+        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,1000);
         
     case 5
-        Bsi = eye(k,k);
+        Bsi = eye(R,R);
         disp('Utilising input initialisations for A,Dk, and Bk');
         Bki = varargin{5};
         Dki = varargin{4};
         Ai = varargin{3};
-        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xkl,k,Bki,Ai,Dki,Bsi,1000);
+        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,1000);
     case 4
-        Bsi = eye(k,k);
-        for kl = 1:sz(3)
-            Bki{kl} = rand(cellsz{kl}(1),k);
+        Bsi = eye(R,R);
+        for kk = 1:K
+            Bki{kk} = rand(cellsz{kk}(1),R);
         end
         disp('Utilising input initialisations for A, and Dk');
         Dki = varargin{4};
         Ai = varargin{3};
-        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xkl,k,Bki,Ai,Dki,Bsi,1000);
+        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,1000);
         
     case 3
-        Bsi = eye(k,k);
-        for kl = 1:sz(3)
-            Bki{kl} = rand(cellsz{kl}(1),k);
-            Dki(:,:,kl) = eye(k,k);
+        Bsi = eye(R,R);
+        for kk = 1:K
+            Bki{kk} = rand(cellsz{kk}(1),R);
+            Dki(:,:,kk) = eye(R,R);
         end
         disp('Utilising input initialisations for A');
         Ai = varargin{3};
-        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xkl,k,Bki,Ai,Dki,Bsi,1000);
+        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,1000);
     case 2
         disp('Utilising random initialisations - best of 10 initial estimates');
         for re = 1:2 %change this to 10
-            Bs = eye(k,k);
-            for kl = 1:sz(3)
-                Bki{kl} = rand(cellsz{kl}(1),k);
-                Dk(:,:,kl) = eye(k,k);
+            Bs = eye(R,R);
+            for kk = 1:K
+                Bki{kk} = rand(cellsz{kk}(1),R);
+                Dk(:,:,kk) = eye(R,R);
             end
-            A = rand(sz(2),k);
-            [Bkit,Ait,Dkit,Bsit,ssr] = nnparafac2als(Xkl,k,Bki,A,Dk,Bs,10);
+            A = rand(J,R);
+            [Bkit,Ait,Dkit,Bsit,ssr] = nnparafac2als(Xk,R,Bki,A,Dk,Bs,10);
             Bki(:,:,:,re) = Bkit; %This is unresolved currently
             Ai(:,:,re) = Ait;
             Dki(:,:,:,re) = Dkit;
@@ -88,32 +91,32 @@ switch size(varargin,2)
             disp(sprintf('Initialisation %d of %d',re,10)) %#ok
         end
         [~,idx] = min(ssr_rand);
-        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xkl,k,Bki(:,:,:,idx),Ai(:,:,idx),Dki(:,:,:,idx),Bsi(:,:,idx),1000);
+        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki(:,:,:,idx),Ai(:,:,idx),Dki(:,:,:,idx),Bsi(:,:,idx),1000);
 end
 
 timeOut = toc;
 
 end
 
-function [Bk,A,Dk,Bs,SSR] = nnparafac2als(Xkl,k,Bki,Ai,Dki,Bsi,maxiter)
+function [Bk,A,Dk,Bs,SSR] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,maxiter)
 
-sz(3) = size(Xkl,2); sz(2) = size(Xkl{1,1},2);
-cellsz = cellfun(@size,Xkl,'uni',false);
+sz(3) = size(Xk,2); sz(2) = size(Xk{1,1},2);
+cellsz = cellfun(@size,Xk,'uni',false);
 
 Bk = Bki; A = Ai; Dk = Dki; Bs = Bsi;
 
 for kk = 1:sz(3)
-    [U, ~, V] = svds(Bk{kk}*Bs,k);
+    [U, ~, V] = svds(Bk{kk}*Bs,R);
     Pk{kk} = U*V';
     Xh{kk} = Bk{kk}*Dk(:,:,kk)*A';
     mk(kk) = sum(sum(Bk{kk}*Dk(:,:,kk)*A'))./sum(sum(Bk{kk}));
-    ssr1(kk) = sum(sum((Xkl{kk} - Xh{kk}).^2)) + mk(kk).*sum(sum((Bk{kk}-Pk{kk}*Bs).^2)); %updated cost function
+    ssr1(kk) = sum(sum((Xk{kk} - Xh{kk}).^2)) + mk(kk).*sum(sum((Bk{kk}-Pk{kk}*Bs).^2)); %updated cost function
 end
 
 ssr2 = 1;
 iter = 1;
 eps = 1e-7;
-YNorm = vertcat(Xkl{:});
+YNorm = vertcat(Xk{:});
 YNorm = sum(YNorm(:).^2);
 ssr1 = sum(ssr1);
 
@@ -125,7 +128,7 @@ while abs(ssr1-ssr2)/ssr1 > eps && abs(ssr1 - ssr2) > abs(ssr1)*eps && iter < ma
     %Pk Estimation
     for kk = 1:sz(3)
         if iter > 1
-            [U, ~, V] = svds(Bk{kk}*Bs,k);
+            [U, ~, V] = svds(Bk{kk}*Bs,R);
             Pk{kk} = U*V';
             %Bs Estimation
             BsT(:,:,kk) = mk(kk).*Pk{kk}'*Bk{kk};
@@ -138,38 +141,38 @@ while abs(ssr1-ssr2)/ssr1 > eps && abs(ssr1 - ssr2) > abs(ssr1)*eps && iter < ma
     
     Bs = 1/(sum(mk))*(sum(BsT,3));
     
-    for kk = 1:k
-        Bs(:,kk) = Bs(:,kk)./norm(Bs(:,kk));
+    for rr = 1:R
+        Bs(:,rr) = Bs(:,rr)./norm(Bs(:,rr));
     end
     
     BkDkIK = vertcat(BkDk{:});
     
     if iter == 1
-        Xjki = vertcat(Xkl{:});
+        Xjki = vertcat(Xk{:});
     end
     
-    for ki = 1:sz(2)
-        A1(ki,:) = fcnnls([],[],BkDkIK'*BkDkIK,BkDkIK'*Xjki(:,ki));
+    for aa = 1:sz(2)
+        A1(aa,:) = fcnnls([],[],BkDkIK'*BkDkIK,BkDkIK'*Xjki(:,aa));
     end
     
     if any(sum(A1,2) == 0)
         A1 = 0.9*A + 0.1*A1;
     end
     
-    for kk = 1:k
+    for rr = 1:R
         A1(A1 == 0) = 1e-20;
-        A1(:,kk) = A1(:,kk)./norm(A1(:,kk));
+        A1(:,rr) = A1(:,rr)./norm(A1(:,rr));
     end
     
     %Bk Estimation
     for kk = 1:sz(3)
         for ii = 1:cellsz{kk}(1)
-            Bkt(ii,:) = fcnnls([],[],(Dk(:,:,kk)*(A1'*A1)*Dk(:,:,kk) + mk(kk)*eye(k)), (Xkl{kk}(ii,:)*A1*Dk(:,:,kk) + mk(kk)*Pk{kk}(ii,:)*Bs)'); %#ok
+            Bkt(ii,:) = fcnnls([],[],(Dk(:,:,kk)*(A1'*A1)*Dk(:,:,kk) + mk(kk)*eye(R)), (Xk{kk}(ii,:)*A1*Dk(:,:,kk) + mk(kk)*Pk{kk}(ii,:)*Bs)'); %#ok
         end
         
         Bk{kk} = Bkt;
         
-        for rr = 1:k
+        for rr = 1:R
             tmp = Bk{kk}(:,rr);
             tmp(tmp == 0) = 1e-20;
             Bk{kk}(:,rr) = tmp;
@@ -178,15 +181,15 @@ while abs(ssr1-ssr2)/ssr1 > eps && abs(ssr1 - ssr2) > abs(ssr1)*eps && iter < ma
     end
     
     for kk = 1:sz(3)
-        Dktemp = diag((pinv(Bk{kk}'*Bk{kk})*Bk{kk}'*Xkl{kk})/A1');
+        Dktemp = diag((pinv(Bk{kk}'*Bk{kk})*Bk{kk}'*Xk{kk})/A1');
         Dk(:,:,kk) = diag(Dktemp);
     end
     
     if iter == 1 %If this is the first iteration, define muk
         for kk = 1:sz(3)
-            S = svds(Xkl{kk} - mean(Xkl{kk}),2); %perform SVD on mean-centred data as an estimate for SNR.
+            S = svds(Xk{kk} - mean(Xk{kk}),2); %perform SVD on mean-centred data as an estimate for SNR.
             SNR = S(1)^2/(S(2)^2);
-            mk(kk) = 10^(-SNR/10)*sum((sum(sqrt((Xkl{kk} - Bk{kk}*Dk(:,:,kk)*A1').^2)))/sum(sum(sqrt((Bk{kk} - Pk{kk}*Bs).^2))));
+            mk(kk) = 10^(-SNR/10)*sum((sum(sqrt((Xk{kk} - Bk{kk}*Dk(:,:,kk)*A1').^2)))/sum(sum(sqrt((Bk{kk} - Pk{kk}*Bs).^2))));
         end
     elseif iter < 10
         for kk = 1:sz(3)
@@ -196,9 +199,9 @@ while abs(ssr1-ssr2)/ssr1 > eps && abs(ssr1 - ssr2) > abs(ssr1)*eps && iter < ma
         
     end
     
-    for kl = 1:sz(3)
-        res_mdl(kl) = norm(Xkl{kl} - Bk{kl}*Dk(:,:,kl)*A1','fro')^2;
-        res_cpl(kl) = mk(kl).*norm((Bk{kl}-Pk{kl}*Bs),'fro')^2;
+    for kk = 1:sz(3)
+        res_mdl(kk) = norm(Xk{kk} - Bk{kk}*Dk(:,:,kk)*A1','fro')^2;
+        res_cpl(kk) = mk(kk).*norm((Bk{kk}-Pk{kk}*Bs),'fro')^2;
     end
     
     ssr2 = sum(res_mdl + res_cpl)/YNorm;
