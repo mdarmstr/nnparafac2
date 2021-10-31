@@ -1,5 +1,5 @@
 # nnparafac2
-Decomposition of multi-dimensional arrays with drift in one mode. As described by Cohen and Bro:
+Non-negative decomposition of multi-dimensional arrays with drift in one mode. As described by Cohen and Bro:
 
 Cohen, Jeremy E., and Rasmus Bro. "Nonnegative PARAFAC2: A flexible coupling approach." International Conference on Latent Variable Analysis and Signal Separation. Springer, Cham, 2018.
 
