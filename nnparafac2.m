@@ -12,7 +12,6 @@ function [Bk,A,Dk,Bs,ssr,timeOut] = nnparafac2(varargin)
 %https://www.mathworks.com/matlabcentral/mlc-downloads/downloads/e5925d25-4a80-11e4-9553-005056977bd0/0b2678a0-fdea-4929-820c-ef5a41b26b46/previews/source/fcnnls.m/index.html
 %
 %(c) Michael D. Sorochan Armstrong, James J. Harynuk 2021
-%git test
 tic
 
 if size(varargin,2) < 2
