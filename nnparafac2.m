@@ -12,6 +12,11 @@ function [Bk,A,Dk,Bs,ssr,timeOut] = nnparafac2(varargin)
 %https://www.mathworks.com/matlabcentral/mlc-downloads/downloads/e5925d25-4a80-11e4-9553-005056977bd0/0b2678a0-fdea-4929-820c-ef5a41b26b46/previews/source/fcnnls.m/index.html
 %
 %(c) Michael D. Sorochan Armstrong, James J. Harynuk 2021
+<<<<<<< HEAD
+=======
+%git test
+
+>>>>>>> single_mode_nonneg
 tic
 
 if size(varargin,2) < 2
@@ -73,15 +78,15 @@ switch size(varargin,2)
         [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,1000);
     case 2
         disp('Utilising random initialisations - best of 10 initial estimates');
-        for re = 1:2 %change this to 10
+        for re = 1:10 
             Bs = eye(R,R);
             for kk = 1:K
-                Bki{kk} = rand(cellsz{kk}(1),R);
+                Bkit{kk} = rand(cellsz{kk}(1),R);
                 Dk(:,:,kk) = eye(R,R);
             end
             A = rand(J,R);
-            [Bkit,Ait,Dkit,Bsit,ssr] = nnparafac2als(Xk,R,Bki,A,Dk,Bs,10);
-            Bki(:,:,:,re) = Bkit; %This is unresolved currently
+            [Bkit,Ait,Dkit,Bsit,ssr] = nnparafac2als(Xk,R,Bkit,A,Dk,Bs,10);
+            Bki(re,:) = Bkit; %This is unresolved currently
             Ai(:,:,re) = Ait;
             Dki(:,:,:,re) = Dkit;
             Bsi(:,:,re) = Bsit;
@@ -90,7 +95,7 @@ switch size(varargin,2)
             disp(sprintf('Initialisation %d of %d',re,10)) %#ok
         end
         [~,idx] = min(ssr_rand);
-        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki(:,:,:,idx),Ai(:,:,idx),Dki(:,:,:,idx),Bsi(:,:,idx),1000);
+        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki(re,:),Ai(:,:,idx),Dki(:,:,:,idx),Bsi(:,:,idx),1000);
 end
 
 timeOut = toc;
@@ -114,13 +119,13 @@ end
 
 ssr2 = 1;
 iter = 1;
-eps = 1e-7;
+eps = 1e-6;
 YNorm = vertcat(Xk{:});
 YNorm = sum(YNorm(:).^2);
-ssr1 = sum(ssr1);
+ssr1 = sum(ssr1)/YNorm;
 
 
-while abs(ssr1-ssr2)/ssr1 > eps && abs(ssr1 - ssr2) > abs(ssr1)*eps && iter < maxiter
+while abs(ssr1-ssr2)/ssr2 > eps && abs(ssr1 - ssr2) > eps && iter < maxiter
     
     ssr1 = ssr2;
     
@@ -154,19 +159,16 @@ while abs(ssr1-ssr2)/ssr1 > eps && abs(ssr1 - ssr2) > abs(ssr1)*eps && iter < ma
         A1(aa,:) = fcnnls([],[],BkDkIK'*BkDkIK,BkDkIK'*Xjki(:,aa));
     end
     
-    if any(sum(A1,2) == 0)
-        A1 = 0.9*A + 0.1*A1;
-    end
-    
     for rr = 1:R
-        A1(A1 == 0) = 1e-20;
         A1(:,rr) = A1(:,rr)./norm(A1(:,rr));
     end
+    
+    A1(isnan(A1)) = 0;
     
     %Bk Estimation
     for kk = 1:sz(3)
         for ii = 1:cellsz{kk}(1)
-            Bkt(ii,:) = fcnnls([],[],(Dk(:,:,kk)*(A1'*A1)*Dk(:,:,kk) + mk(kk)*eye(R)), (Xk{kk}(ii,:)*A1*Dk(:,:,kk) + mk(kk)*Pk{kk}(ii,:)*Bs)'); %#ok
+            Bkt(ii,:) = pinv(Dk(:,:,kk)*(A1'*A1)*Dk(:,:,kk) + mk(kk)*eye(R))*(Xk{kk}(ii,:)*A1*Dk(:,:,kk) + mk(kk)*Pk{kk}(ii,:)*Bs)'; %#ok
         end
         
         Bk{kk} = Bkt;
@@ -180,7 +182,7 @@ while abs(ssr1-ssr2)/ssr1 > eps && abs(ssr1 - ssr2) > abs(ssr1)*eps && iter < ma
     end
     
     for kk = 1:sz(3)
-        Dktemp = diag((pinv(Bk{kk}'*Bk{kk})*Bk{kk}'*Xk{kk})/A1');
+        Dktemp = diag(pinv(Bk{kk}'*Bk{kk})*Bk{kk}'*Xk{kk}*pinv(A1)');
         Dk(:,:,kk) = diag(Dktemp);
     end
     
@@ -209,7 +211,7 @@ while abs(ssr1-ssr2)/ssr1 > eps && abs(ssr1 - ssr2) > abs(ssr1)*eps && iter < ma
     %Disply output, progress of the algorithm
     if iter == 1
         varNames = {'Iteration','Absolute Error','Relative Error','SSR','mk'};
-        fprintf(1,'\n%s\t\t%s\t\t%s\t\t%s\t\t%s\n',varNames{:})
+        fprintf(1,'\n%s\t\t%s\t\t%s\t\t%s\t\t\t\t\t%s\n',varNames{:})
         fprintf(1,' \t\t%d\t\t%e\t\t%e\t\t%e\t\t%e\n',[iter,abs(ssr2-ssr1),abs(ssr2-ssr1)/abs(ssr2),SSR(iter),mean(mk)]);
     else
         fprintf(1,' \t\t%d\t\t%e\t\t%e\t\t%e\t\t%e\n',[iter,abs(ssr2-ssr1),abs(ssr2-ssr1)/abs(ssr2),SSR(iter),mean(mk)]);
