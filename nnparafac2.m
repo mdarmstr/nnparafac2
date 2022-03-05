@@ -219,7 +219,7 @@ while abs(ssr1-ssr2)/ssr2 > eps && abs(ssr1 - ssr2) > eps && iter < maxiter
     
 end
 
-pvar = 100*(1-norm(res_mdl)/YNorm);
+pvar = 100*(1-sum(res_mdl)/YNorm);
 
 
 end
