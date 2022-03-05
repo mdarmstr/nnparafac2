@@ -74,7 +74,7 @@ switch size(varargin,2)
         [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,1000);
     case 2
         disp('Utilising random initialisations - best of 10 initial estimates');
-        for re = 1:1
+        for re = 1:10
             Bs = eye(R,R);
             for kk = 1:K
                 Bkit{kk} = rand(cellsz{kk}(1),R);
