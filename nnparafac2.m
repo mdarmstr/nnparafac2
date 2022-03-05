@@ -1,4 +1,4 @@
-function [Bk,A,Dk,Bs,ssr,timeOut] = nnparafac2(varargin)
+function [Bk,A,Dk,Bs,ssr,pvar,timeOut] = nnparafac2(varargin)
 %
 %Implementation of the Flexible-Coupling (Non-Negative) PARAFAC2, as described by Cohen and Bro:
 %
@@ -74,7 +74,7 @@ switch size(varargin,2)
         [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,1000);
     case 2
         disp('Utilising random initialisations - best of 10 initial estimates');
-        for re = 1:10 
+        for re = 1:10
             Bs = eye(R,R);
             for kk = 1:K
                 Bkit{kk} = rand(cellsz{kk}(1),R);
@@ -91,14 +91,14 @@ switch size(varargin,2)
             disp(sprintf('Initialisation %d of %d',re,10)) %#ok
         end
         [~,idx] = min(ssr_rand);
-        [Bk,A,Dk,Bs,ssr] = nnparafac2als(Xk,R,Bki(re,:),Ai(:,:,idx),Dki(:,:,:,idx),Bsi(:,:,idx),1000);
+        [Bk,A,Dk,Bs,ssr,pvar] = nnparafac2als(Xk,R,Bki(re,:),Ai(:,:,idx),Dki(:,:,:,idx),Bsi(:,:,idx),1000);
 end
 
 timeOut = toc;
 
 end
 
-function [Bk,A,Dk,Bs,SSR] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,maxiter)
+function [Bk,A,Dk,Bs,SSR,pvar] = nnparafac2als(Xk,R,Bki,Ai,Dki,Bsi,maxiter)
 
 sz(3) = size(Xk,2); sz(2) = size(Xk{1,1},2);
 cellsz = cellfun(@size,Xk,'uni',false);
@@ -218,5 +218,8 @@ while abs(ssr1-ssr2)/ssr2 > eps && abs(ssr1 - ssr2) > eps && iter < maxiter
     iter = iter + 1;
     
 end
+
+pvar = 100*(1-norm(res_mdl)/YNorm);
+
 
 end
