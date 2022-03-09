@@ -115,7 +115,7 @@ end
 
 ssr2 = 1;
 iter = 1;
-eps = 1e-6;
+eps = 1e-8;
 YNorm = vertcat(Xk{:});
 YNorm = sum(YNorm(:).^2);
 ssr1 = sum(ssr1)/YNorm;
