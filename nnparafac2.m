@@ -115,7 +115,7 @@ end
 
 ssr2 = 1;
 iter = 1;
-eps = 1e-8;
+eps = 1e-7;
 YNorm = vertcat(Xk{:});
 YNorm = sum(YNorm(:).^2);
 ssr1 = sum(ssr1)/YNorm;
@@ -170,11 +170,9 @@ while abs(ssr1-ssr2)/ssr2 > eps && abs(ssr1 - ssr2) > eps && iter < maxiter
         Bk{kk} = Bkt;
         
         for rr = 1:R
-            tmp = Bk{kk}(:,rr);
-            tmp(tmp == 0) = 1e-20;
-            Bk{kk}(:,rr) = tmp;
             Bk{kk}(:,rr) = Bk{kk}(:,rr)./norm(Bk{kk}(:,rr));
         end
+        Bk{kk}(isnan(Bk{kk})) = 0;
     end
     
     for kk = 1:sz(3)
