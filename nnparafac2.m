@@ -115,7 +115,7 @@ end
 
 ssr2 = 1;
 iter = 1;
-eps = 1e-7;
+eps = 1e-6;
 YNorm = vertcat(Xk{:});
 YNorm = sum(YNorm(:).^2);
 ssr1 = sum(ssr1)/YNorm;
@@ -188,7 +188,7 @@ while abs(ssr1-ssr2)/ssr2 > eps && abs(ssr1 - ssr2) > eps && iter < maxiter
         end
     elseif iter < 10
         for kk = 1:sz(3)
-            mk(kk) = min(mk(kk)*1.05,1e12); %Growing mk with each iteration.
+            mk(kk) = min(mk(kk)*1.03,1e12); %Growing mk with each iteration.
         end
     else
         
@@ -218,8 +218,8 @@ while abs(ssr1-ssr2)/ssr2 > eps && abs(ssr1 - ssr2) > eps && iter < maxiter
 end
 
 for kk = 1:sz(3)
-    pvart(kk) = sum(sum(Xk{kk} - Bk{kk}*Dk(:,:,kk)*A'))^2/sum(sum(Xk{kk}))^2;
+    pvart(kk) = sum(sum(Xk{kk} - Bk{kk}*Dk(:,:,kk)*A'))^2;
 end
 
-pvar = 100*(1-sum(pvart));
+pvar = 100*(1 - sum(pvart)/YNorm);
 end
