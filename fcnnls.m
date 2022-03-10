@@ -53,7 +53,9 @@ D=K;
 Fset = find(~all(Pset));
 
 % Active set algorithm for NNLS main loop
-while ~isempty(Fset) 
+iter_outer = 1;
+while ~isempty(Fset) && iter_outer < maxiter
+    iter_outer = iter_outer + 1;
     % Solve for the passive variables (uses subroutine below)
     K(:,Fset) = cssls(CtC, CtA(:,Fset), Pset(:,Fset));
     % Find any infeasible solutions
