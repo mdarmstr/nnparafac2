@@ -218,7 +218,7 @@ while abs(ssr1-ssr2)/ssr2 > eps && abs(ssr1 - ssr2) > eps && iter < maxiter
 end
 
 for kk = 1:sz(3)
-    pvart(kk) = sum(sum(Xk{kk} - Bk{kk}*Dk(:,:,kk)*A'))^2;
+    pvart(kk) = sum(sum((Xk{kk} - Bk{kk}*Dk(:,:,kk)*A').^2));
 end
 
 pvar = 100*(1 - sum(pvart)/YNorm);
